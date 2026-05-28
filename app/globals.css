@@ -1,50 +1,148 @@
-﻿@tailwind base;
+@tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 :root {
-  --background: 210 20% 98%;
-  --foreground: 222 47% 11%;
+  --sg-navy: #0f1e4b;
+  --sg-cobalt: #1e4ed8;
+  --sg-cobalt-hover: #1a56f5;
+  --sg-cobalt-active: #1641b0;
+  --sg-cobalt-tint: #eff6ff;
+  --sg-cobalt-selected: #dbeafe;
+  --sg-graphite: #0d1117;
+  --sg-dark-slate: #0f172a;
+  --sg-dark-nav: #0d1b2e;
+  --sg-dark-surface: #1e293b;
+  --sg-dark-border: #334155;
+  --sg-dark-text: #f1f5f9;
+  --sg-slate: #475569;
+  --sg-slate-muted: #94a3b8;
+  --sg-border-light: #e5eaf1;
+  --sg-input-border: #d5dde8;
+  --sg-surface-0: #ffffff;
+  --sg-surface-1: #f8fafc;
+  --sg-surface-2: #f1f5f9;
+  --sg-emerald: #059669;
+  --sg-emerald-tint: #ecfdf5;
+  --sg-amber: #d97706;
+  --sg-amber-tint: #fffbeb;
+  --sg-red: #dc2626;
+  --sg-red-tint: #fef2f2;
+  --sg-cyan: #0891b2;
+  --sg-cyan-tint: #ecfeff;
+  --sg-souyess: #e85400;
+  --radius-card: 6px;
+  --radius-control: 6px;
+  --radius-badge: 4px;
+  --radius-small: 2px;
+
+  --background: 210 40% 98%;
+  --foreground: 224 67% 18%;
   --card: 0 0% 100%;
-  --card-foreground: 222 47% 11%;
-  --border: 214 32% 91%;
-  --input: 214 32% 91%;
-  --ring: 202 80% 38%;
-  --primary: 202 80% 32%;
-  --primary-foreground: 210 40% 98%;
-  --muted: 210 40% 94%;
+  --card-foreground: 224 67% 18%;
+  --popover: 0 0% 100%;
+  --popover-foreground: 224 67% 18%;
+  --border: 214 29% 92%;
+  --input: 214 28% 87%;
+  --ring: 224 71% 48%;
+  --primary: 224 71% 48%;
+  --primary-foreground: 0 0% 100%;
+  --muted: 210 40% 96%;
   --muted-foreground: 215 16% 47%;
-  --accent: 168 64% 33%;
-  --accent-foreground: 210 40% 98%;
+  --accent: 214 80% 97%;
+  --accent-foreground: 224 71% 48%;
   --destructive: 0 72% 51%;
-  --destructive-foreground: 210 40% 98%;
-  --radius: 0.5rem;
+  --destructive-foreground: 0 0% 100%;
 }
 
 .dark {
-  --background: 220 24% 8%;
-  --foreground: 210 40% 98%;
-  --card: 220 22% 12%;
-  --card-foreground: 210 40% 98%;
-  --border: 217 19% 24%;
-  --input: 217 19% 24%;
-  --ring: 198 93% 60%;
-  --primary: 198 93% 48%;
-  --primary-foreground: 222 47% 11%;
-  --muted: 217 19% 18%;
-  --muted-foreground: 215 20% 70%;
-  --accent: 162 73% 46%;
-  --accent-foreground: 222 47% 11%;
-  --destructive: 0 63% 44%;
-  --destructive-foreground: 210 40% 98%;
+  --background: 222 47% 11%;
+  --foreground: 210 40% 96%;
+  --card: 217 33% 17%;
+  --card-foreground: 210 40% 96%;
+  --popover: 217 33% 17%;
+  --popover-foreground: 210 40% 96%;
+  --border: 215 25% 27%;
+  --input: 215 25% 27%;
+  --ring: 224 83% 62%;
+  --primary: 224 71% 48%;
+  --primary-foreground: 0 0% 100%;
+  --muted: 217 33% 14%;
+  --muted-foreground: 215 20% 65%;
+  --accent: 224 71% 18%;
+  --accent-foreground: 214 100% 97%;
+  --destructive: 0 72% 51%;
+  --destructive-foreground: 0 0% 100%;
 }
 
 * {
   border-color: hsl(var(--border));
 }
 
+html {
+  scroll-behavior: smooth;
+}
+
 body {
   min-height: 100vh;
   background: hsl(var(--background));
   color: hsl(var(--foreground));
+  font-size: 14px;
+  line-height: 1.5;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+@layer base {
+  h1,
+  .sg-heading-1 {
+    @apply text-h1 font-semibold text-specgov-navy dark:text-specgov-dark-text;
+  }
+
+  h2,
+  .sg-heading-2 {
+    @apply text-h2 font-semibold text-specgov-navy dark:text-specgov-dark-text;
+  }
+
+  h3,
+  .sg-heading-3 {
+    @apply text-h3 font-medium uppercase text-specgov-slate dark:text-specgov-slate-muted;
+  }
+
+  .sg-display {
+    @apply text-display text-specgov-navy dark:text-specgov-dark-text;
+  }
+
+  .sg-label {
+    @apply text-label font-medium uppercase text-specgov-slate dark:text-specgov-slate-muted;
+  }
+
+  .sg-caption {
+    @apply text-caption text-specgov-slate dark:text-specgov-slate-muted;
+  }
+
+  .sg-overline {
+    @apply text-overline font-semibold uppercase text-specgov-cobalt;
+  }
+
+  .sg-code {
+    @apply font-mono text-code text-specgov-slate dark:text-specgov-slate-muted;
+  }
+}
+
+@layer utilities {
+  .blueprint-grid {
+    background-image:
+      linear-gradient(to right, rgba(15, 30, 75, 0.018) 1px, transparent 1px),
+      linear-gradient(to bottom, rgba(15, 30, 75, 0.018) 1px, transparent 1px);
+    background-size: 32px 32px;
+    background-position: -1px -1px;
+  }
+
+  .dark .blueprint-grid {
+    background-image:
+      linear-gradient(to right, rgba(241, 245, 249, 0.026) 1px, transparent 1px),
+      linear-gradient(to bottom, rgba(241, 245, 249, 0.026) 1px, transparent 1px);
+  }
 }

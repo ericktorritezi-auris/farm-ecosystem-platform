@@ -13,6 +13,7 @@ O primeiro modulo previsto e a **Gestao de Especificacoes Funcionais**, voltado 
 - Tailwind CSS
 - Radix/shadcn-style components
 - Auth.js/NextAuth preparado para sessao segura com cookie httpOnly
+- SpecGov Design System v2.0
 
 ## Escopo da v0.1.0
 
@@ -22,6 +23,7 @@ O primeiro modulo previsto e a **Gestao de Especificacoes Funcionais**, voltado 
 - Schema inicial do banco.
 - Seed inicial com usuario master, perfis, permissoes, naturezas, status e pareceres.
 - Documentacao inicial de arquitetura, setup local, deploy interno e banco.
+- Foundation architecture visual com tokens, componentes e app shell SpecGov.
 
 Ainda nao ha autenticacao funcional, CRUDs, workflow completo, dashboard operacional ou geracao DOCX implementada.
 
