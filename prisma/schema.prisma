@@ -1,0 +1,295 @@
+﻿generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserStatus {
+  ACTIVE
+  INACTIVE
+  BLOCKED
+}
+
+enum ApprovalStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  ADJUSTMENT_REQUESTED
+  CANCELLED
+}
+
+enum ApprovalScopeType {
+  GLOBAL
+  SYSTEM
+  MODULE
+  FEATURE
+}
+
+enum AuditResult {
+  SUCCESS
+  FAILURE
+}
+
+enum DocumentFormat {
+  DOCX
+  PDF
+}
+
+model User {
+  id                     String                  @id @default(cuid())
+  name                   String
+  email                  String                  @unique
+  phone                  String?
+  login                  String                  @unique
+  passwordHash           String
+  status                 UserStatus              @default(ACTIVE)
+  canApprove             Boolean                 @default(false)
+  createdAt              DateTime                @default(now())
+  updatedAt              DateTime                @updatedAt
+  roles                  UserRole[]
+  approvalScopes         ApprovalScope[]
+  createdFunctionalItems FunctionalItem[]        @relation("FunctionalItemCreatedBy")
+  updatedFunctionalItems FunctionalItem[]        @relation("FunctionalItemUpdatedBy")
+  versions               FunctionalItemVersion[]
+  approvalRequests       ApprovalRequest[]       @relation("ApprovalRequestedBy")
+  approvalDecisions      ApprovalDecision[]
+  auditLogs              AuditLog[]
+  documentLogs           DocumentGenerationLog[]
+}
+
+model Role {
+  id          String           @id @default(cuid())
+  code        String           @unique
+  name        String
+  description String?
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+  users       UserRole[]
+  permissions RolePermission[]
+}
+
+model Permission {
+  id          String           @id @default(cuid())
+  code        String           @unique
+  description String?
+  createdAt   DateTime         @default(now())
+  roles       RolePermission[]
+}
+
+model UserRole {
+  userId String
+  roleId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role   Role   @relation(fields: [roleId], references: [id], onDelete: Cascade)
+
+  @@id([userId, roleId])
+}
+
+model RolePermission {
+  roleId       String
+  permissionId String
+  role         Role       @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  permission   Permission @relation(fields: [permissionId], references: [id], onDelete: Cascade)
+
+  @@id([roleId, permissionId])
+}
+
+model ApprovalScope {
+  id        String            @id @default(cuid())
+  userId    String
+  type      ApprovalScopeType
+  systemId  String?
+  moduleId  String?
+  featureId String?
+  createdAt DateTime          @default(now())
+  user      User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  system    System?           @relation(fields: [systemId], references: [id])
+  module    SystemModule?     @relation(fields: [moduleId], references: [id])
+  feature   Feature?          @relation(fields: [featureId], references: [id])
+}
+
+model Nature {
+  id              String           @id @default(cuid())
+  code            String           @unique
+  name            String
+  description     String?
+  isActive        Boolean          @default(true)
+  sortOrder       Int              @default(0)
+  functionalItems FunctionalItem[]
+}
+
+model ItemStatus {
+  id              String           @id @default(cuid())
+  code            String           @unique
+  name            String
+  description     String?
+  isActive        Boolean          @default(true)
+  sortOrder       Int              @default(0)
+  functionalItems FunctionalItem[]
+}
+
+model OpinionType {
+  id               String                  @id @default(cuid())
+  code             String                  @unique
+  name             String
+  description      String?
+  requiresApproval Boolean                 @default(false)
+  isActive         Boolean                 @default(true)
+  sortOrder        Int                     @default(0)
+  versions         FunctionalItemVersion[]
+  approvals        ApprovalRequest[]
+}
+
+model System {
+  id              String           @id @default(cuid())
+  name            String
+  slug            String           @unique
+  description     String?
+  isActive        Boolean          @default(true)
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+  modules         SystemModule[]
+  functionalItems FunctionalItem[]
+  approvalScopes  ApprovalScope[]
+}
+
+model SystemModule {
+  id              String           @id @default(cuid())
+  systemId        String
+  name            String
+  slug            String
+  description     String?
+  isActive        Boolean          @default(true)
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+  system          System           @relation(fields: [systemId], references: [id], onDelete: Restrict)
+  features        Feature[]
+  functionalItems FunctionalItem[]
+  approvalScopes  ApprovalScope[]
+
+  @@unique([systemId, slug])
+}
+
+model Feature {
+  id              String           @id @default(cuid())
+  moduleId        String
+  name            String
+  slug            String
+  description     String?
+  isActive        Boolean          @default(true)
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+  module          SystemModule     @relation(fields: [moduleId], references: [id], onDelete: Restrict)
+  functionalItems FunctionalItem[]
+  approvalScopes  ApprovalScope[]
+
+  @@unique([moduleId, slug])
+}
+
+model FunctionalItem {
+  id               String                  @id @default(cuid())
+  systemId         String
+  moduleId         String
+  featureId        String
+  natureId         String
+  statusId         String
+  title            String
+  description      String
+  pocRequired      Boolean                 @default(false)
+  currentVersion   String
+  opinion          String?
+  observations     String?
+  createdById      String
+  updatedById      String?
+  createdAt        DateTime                @default(now())
+  updatedAt        DateTime                @updatedAt
+  system           System                  @relation(fields: [systemId], references: [id], onDelete: Restrict)
+  module           SystemModule            @relation(fields: [moduleId], references: [id], onDelete: Restrict)
+  feature          Feature                 @relation(fields: [featureId], references: [id], onDelete: Restrict)
+  nature           Nature                  @relation(fields: [natureId], references: [id], onDelete: Restrict)
+  status           ItemStatus              @relation(fields: [statusId], references: [id], onDelete: Restrict)
+  createdBy        User                    @relation("FunctionalItemCreatedBy", fields: [createdById], references: [id], onDelete: Restrict)
+  updatedBy        User?                   @relation("FunctionalItemUpdatedBy", fields: [updatedById], references: [id], onDelete: Restrict)
+  versions         FunctionalItemVersion[]
+  approvalRequests ApprovalRequest[]
+}
+
+model FunctionalItemVersion {
+  id               String                 @id @default(cuid())
+  functionalItemId String
+  version          String
+  year             Int
+  sequence         Int
+  previousValues   Json?
+  newValues        Json
+  changeSummary    String?
+  justification    String?
+  opinionTypeId    String?
+  approvalStatus   ApprovalStatus         @default(PENDING)
+  createdById      String
+  createdAt        DateTime               @default(now())
+  functionalItem   FunctionalItem         @relation(fields: [functionalItemId], references: [id], onDelete: Cascade)
+  opinionType      OpinionType?           @relation(fields: [opinionTypeId], references: [id], onDelete: SetNull)
+  createdBy        User                   @relation(fields: [createdById], references: [id], onDelete: Restrict)
+  approvalRequests ApprovalRequest[]
+
+  @@unique([functionalItemId, version])
+}
+
+model ApprovalRequest {
+  id               String                 @id @default(cuid())
+  functionalItemId String
+  versionId        String?
+  opinionTypeId    String?
+  status           ApprovalStatus         @default(PENDING)
+  requestedById    String
+  requestedAt      DateTime               @default(now())
+  resolvedAt       DateTime?
+  notes            String?
+  functionalItem   FunctionalItem         @relation(fields: [functionalItemId], references: [id], onDelete: Cascade)
+  version          FunctionalItemVersion? @relation(fields: [versionId], references: [id], onDelete: SetNull)
+  opinionType      OpinionType?           @relation(fields: [opinionTypeId], references: [id], onDelete: SetNull)
+  requestedBy      User                   @relation("ApprovalRequestedBy", fields: [requestedById], references: [id], onDelete: Restrict)
+  decisions        ApprovalDecision[]
+}
+
+model ApprovalDecision {
+  id                String          @id @default(cuid())
+  approvalRequestId String
+  approverId        String
+  decision          ApprovalStatus
+  comment           String?
+  createdAt         DateTime        @default(now())
+  approvalRequest   ApprovalRequest @relation(fields: [approvalRequestId], references: [id], onDelete: Cascade)
+  approver          User            @relation(fields: [approverId], references: [id], onDelete: Restrict)
+}
+
+model AuditLog {
+  id            String      @id @default(cuid())
+  userId        String?
+  entity        String
+  entityId      String?
+  action        String
+  previousValue Json?
+  newValue      Json?
+  result        AuditResult @default(SUCCESS)
+  ipAddress     String?
+  metadata      Json?
+  createdAt     DateTime    @default(now())
+  user          User?       @relation(fields: [userId], references: [id], onDelete: SetNull)
+}
+
+model DocumentGenerationLog {
+  id        String         @id @default(cuid())
+  userId    String
+  format    DocumentFormat
+  filters   Json?
+  fileName  String?
+  status    String
+  metadata  Json?
+  createdAt DateTime       @default(now())
+  user      User           @relation(fields: [userId], references: [id], onDelete: Restrict)
+}

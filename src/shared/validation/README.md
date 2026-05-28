@@ -1,0 +1,3 @@
+﻿# Validation
+
+Schemas Zod compartilhados.
