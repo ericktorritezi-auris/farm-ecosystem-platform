@@ -2,6 +2,24 @@
 
 Todas as alteracoes relevantes deste projeto devem ser registradas neste arquivo.
 
+## v0.1.2 - Inclusao estrutural de abrangencia estadual para particularidades funcionais
+
+### Adicionado
+
+- Enum `FunctionalItemScopeType` com `GENERAL` e `STATE_SPECIFIC`.
+- Entidade `BrazilianState` para parametrizar os 26 estados brasileiros e o Distrito Federal.
+- Entidade `FunctionalItemState` para vincular particularidades/funcoes a uma ou mais UFs.
+- Campo `FunctionalItem.scopeType` para indicar abrangencia geral ou especifica.
+- Campo `FunctionalItemVersion.scopeSnapshot` para preservar snapshot historico da abrangencia estadual.
+- Seed inicial das 27 UFs brasileiras.
+- Contrato TypeScript `state-scope.ts` para filtros documentais futuros por estado.
+- Documentacao da regra futura de geracao documental com `stateCode` opcional.
+
+### Observacoes
+
+- A regra `STATE_SPECIFIC` deve exigir ao menos uma UF na camada de servico quando os fluxos funcionais forem implementados.
+- Nao foram criados CRUD, telas, APIs, autenticacao ou geracao documental nesta entrega.
+
 ## v0.1.0 - Estrutura inicial
 
 ### Adicionado

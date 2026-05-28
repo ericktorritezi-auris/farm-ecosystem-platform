@@ -92,6 +92,36 @@ const opinionTypes = [
   ["other", "Outros", "Parecer parametrizavel para cenarios especificos.", true]
 ] as const;
 
+const brazilianStates = [
+  ["AC", "Acre", "Norte"],
+  ["AL", "Alagoas", "Nordeste"],
+  ["AP", "Amapá", "Norte"],
+  ["AM", "Amazonas", "Norte"],
+  ["BA", "Bahia", "Nordeste"],
+  ["CE", "Ceará", "Nordeste"],
+  ["DF", "Distrito Federal", "Centro-Oeste"],
+  ["ES", "Espírito Santo", "Sudeste"],
+  ["GO", "Goiás", "Centro-Oeste"],
+  ["MA", "Maranhão", "Nordeste"],
+  ["MT", "Mato Grosso", "Centro-Oeste"],
+  ["MS", "Mato Grosso do Sul", "Centro-Oeste"],
+  ["MG", "Minas Gerais", "Sudeste"],
+  ["PA", "Pará", "Norte"],
+  ["PB", "Paraíba", "Nordeste"],
+  ["PR", "Paraná", "Sul"],
+  ["PE", "Pernambuco", "Nordeste"],
+  ["PI", "Piauí", "Nordeste"],
+  ["RJ", "Rio de Janeiro", "Sudeste"],
+  ["RN", "Rio Grande do Norte", "Nordeste"],
+  ["RS", "Rio Grande do Sul", "Sul"],
+  ["RO", "Rondônia", "Norte"],
+  ["RR", "Roraima", "Norte"],
+  ["SC", "Santa Catarina", "Sul"],
+  ["SP", "São Paulo", "Sudeste"],
+  ["SE", "Sergipe", "Nordeste"],
+  ["TO", "Tocantins", "Norte"]
+] as const;
+
 async function main() {
   for (const [code, description] of permissions) {
     await prisma.permission.upsert({
@@ -148,6 +178,14 @@ async function main() {
       where: { code },
       update: { name, description, requiresApproval, sortOrder: index + 1, isActive: true },
       create: { code, name, description, requiresApproval, sortOrder: index + 1 }
+    });
+  }
+
+  for (const [code, name, region] of brazilianStates) {
+    await prisma.brazilianState.upsert({
+      where: { code },
+      update: { name, region, isActive: true },
+      create: { code, name, region }
     });
   }
 

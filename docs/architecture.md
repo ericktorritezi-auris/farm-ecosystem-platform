@@ -29,9 +29,28 @@ A plataforma nasce como um ecossistema interno modular. O primeiro modulo e a Ge
 - modulos;
 - funcionalidades;
 - particularidades/funcoes;
+- abrangencia estadual das particularidades/funcoes;
 - aprovacoes;
 - documentos;
 - dashboard.
+
+## Abrangencia estadual
+
+O dominio de especificacoes suporta particularidades/funcoes gerais ou especificas por UF.
+
+Modelagem:
+
+- `FunctionalItem.scopeType`: define `GENERAL` ou `STATE_SPECIFIC`.
+- `BrazilianState`: cadastro parametrizado das 27 UFs brasileiras.
+- `FunctionalItemState`: relacionamento entre particularidade/funcao e uma ou mais UFs.
+- `FunctionalItemVersion.scopeSnapshot`: snapshot historico da abrangencia no momento da versao.
+
+Essa modelagem prepara filtros, consultas, governanca e geracao documental futura sem usar campo texto livre.
+
+Regra documental futura:
+
+- sem filtro por estado: listar todos os itens, sinalizando itens especificos por UF;
+- com filtro por estado: listar itens gerais e itens especificos da UF filtrada.
 
 ## Decisao de arquitetura
 

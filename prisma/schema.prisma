@@ -38,6 +38,11 @@ enum DocumentFormat {
   PDF
 }
 
+enum FunctionalItemScopeType {
+  GENERAL
+  STATE_SPECIFIC
+}
+
 model User {
   id                     String                  @id @default(cuid())
   name                   String
@@ -143,6 +148,17 @@ model OpinionType {
   approvals        ApprovalRequest[]
 }
 
+model BrazilianState {
+  id              String                @id @default(cuid())
+  code            String                @unique
+  name            String
+  region          String?
+  isActive        Boolean               @default(true)
+  createdAt       DateTime              @default(now())
+  updatedAt       DateTime              @updatedAt
+  functionalItems FunctionalItemState[]
+}
+
 model System {
   id              String           @id @default(cuid())
   name            String
@@ -199,6 +215,7 @@ model FunctionalItem {
   title            String
   description      String
   pocRequired      Boolean                 @default(false)
+  scopeType        FunctionalItemScopeType  @default(GENERAL)
   currentVersion   String
   opinion          String?
   observations     String?
@@ -213,8 +230,20 @@ model FunctionalItem {
   status           ItemStatus              @relation(fields: [statusId], references: [id], onDelete: Restrict)
   createdBy        User                    @relation("FunctionalItemCreatedBy", fields: [createdById], references: [id], onDelete: Restrict)
   updatedBy        User?                   @relation("FunctionalItemUpdatedBy", fields: [updatedById], references: [id], onDelete: Restrict)
+  states           FunctionalItemState[]
   versions         FunctionalItemVersion[]
   approvalRequests ApprovalRequest[]
+}
+
+model FunctionalItemState {
+  id               String         @id @default(cuid())
+  functionalItemId String
+  stateId          String
+  createdAt        DateTime       @default(now())
+  functionalItem   FunctionalItem @relation(fields: [functionalItemId], references: [id], onDelete: Cascade)
+  state            BrazilianState @relation(fields: [stateId], references: [id], onDelete: Restrict)
+
+  @@unique([functionalItemId, stateId])
 }
 
 model FunctionalItemVersion {
@@ -225,6 +254,7 @@ model FunctionalItemVersion {
   sequence         Int
   previousValues   Json?
   newValues        Json
+  scopeSnapshot    Json?
   changeSummary    String?
   justification    String?
   opinionTypeId    String?
