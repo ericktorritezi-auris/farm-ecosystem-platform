@@ -2,6 +2,17 @@
 
 Todas as alteracoes relevantes deste projeto devem ser registradas neste arquivo.
 
+## Unreleased
+
+### Adicionado
+
+- Pagina estatica `O Projeto` para comunicacao executiva do SpecGov, com visao do produto, evolucao, maturidade, arquitetura, governanca, perfis, roadmap e status de implementacao.
+- Item de navegacao principal `O Projeto`, posicionado apos Dashboard.
+
+### Observacoes
+
+- A pagina nao consulta banco, nao usa API, nao altera dominio e deve ser atualizada sempre que uma evolucao real alterar versao, entregas concluidas ou percentual de maturidade.
+
 ## v0.2.0 - Core Governance Engine foundation
 
 ### Adicionado

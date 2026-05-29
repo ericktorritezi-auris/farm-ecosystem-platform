@@ -3,6 +3,7 @@ import {
   CheckSquare,
   FileText,
   GitBranch,
+  Landmark,
   LayoutDashboard,
   ScrollText,
   Settings,
@@ -11,6 +12,7 @@ import {
 
 export const platformNavigation = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
+  { href: "/o-projeto", label: "O Projeto", icon: Landmark },
   { href: "/especificacoes", label: "Especificacoes", icon: FileText },
   { href: "/approvals", label: "Aprovacoes", icon: CheckSquare },
   { href: "/rastreabilidade", label: "Rastreabilidade", icon: GitBranch },
