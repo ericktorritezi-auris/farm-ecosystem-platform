@@ -68,6 +68,14 @@ Joao -> Etherium -> APPROVER
 
 A sessao deve exigir empresa ativa para operacoes empresariais.
 
+Na v0.2.0, um usuario deve ter apenas um papel ativo por empresa. A constraint fisica recomendada e:
+
+```text
+userId + companyId
+```
+
+Isso evita conflitos como `AGENT` e `LEADER` simultaneos na mesma empresa. Escopos adicionais devem ser tratados por permissoes, delegacoes ou configuracoes futuras, nao por multiplos papeis concorrentes.
+
 ## Permissoes granulares recomendadas
 
 - `company.read`

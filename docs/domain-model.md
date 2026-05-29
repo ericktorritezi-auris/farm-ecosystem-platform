@@ -12,7 +12,7 @@ Consolidar a arquitetura alvo do dominio SpecGov antes da construcao do Core Gov
 - `User`: identidade de acesso.
 - `Role`: papel operacional.
 - `Permission`: acao granular.
-- `CompanyUserRole`: vincula usuario, empresa e papel.
+- `CompanyUserRole`: vincula usuario, empresa e um unico papel ativo na empresa.
 
 ### Especificacoes
 
@@ -105,26 +105,42 @@ Company
 
 ## Regras de escopo empresarial
 
-Entidades com `companyId` direto recomendado:
+Entidades com `companyId` direto na v0.2.0:
 
 - `System`
+- `SystemModule`
+- `Feature`
+- `FunctionalItem`
+- `Version`
+- `ChangeSet`
 - `ApprovalFlow`
 - `ApprovalRequest`
+- `CompanyUserRole`
+
+Entidades com `companyId` direto recomendado nas proximas fases:
+
 - `ImportBatch`
 - `DocumentTemplate`
 - `DocumentGeneration`
 - `AdherenceAnalysis`
 - `AuditLog`
-- `CompanyUserRole`
 
-Entidades que herdam empresa pela hierarquia, mas podem manter denormalizacao por desempenho/historico:
+Entidades que carregam contexto por relacao direta ou por versao/snapshot:
 
-- `SystemModule`
-- `Feature`
-- `FunctionalItem`
-- `Version`
 - `Snapshot`
-- `ChangeSet`
+
+## Fonte oficial da hierarquia
+
+`Feature` governa a localizacao estrutural de uma `FunctionalItem`.
+
+Campos denormalizados em `FunctionalItem`:
+
+- `companyId`;
+- `systemId`;
+- `moduleId`;
+- `featureId`.
+
+Esses campos existem para seguranca, auditoria, desempenho e filtros. Eles nao devem ser aceitos livremente da interface. Services de dominio devem resolver `featureId -> moduleId -> systemId -> companyId` e gravar o contexto resultante.
 
 ## Hierarquia funcional
 
@@ -265,3 +281,4 @@ Excluir significa marcar `isDeleted`, registrar `deletedAt`, `deletedById`, moti
 - Nenhuma aprovacao deve ocorrer fora do escopo de papel e empresa do aprovador.
 - Nenhuma renumeracao deve ocorrer sem preservar codigo anterior, codigo novo, posicao anterior e posicao nova.
 - Nenhuma substituicao 1:N ou N:N deve ser representada apenas por `replacedById`.
+- `FunctionalItemVersion` nao faz parte do modelo fisico v0.2.0. O historico funcional deve usar `Version`, `Snapshot`, `ChangeSet` e `ChangeSetItem`.

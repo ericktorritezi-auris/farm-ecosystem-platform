@@ -43,6 +43,75 @@ enum FunctionalItemScopeType {
   STATE_SPECIFIC
 }
 
+enum VersionStatus {
+  DRAFT
+  PENDING_APPROVAL
+  APPROVED
+  PUBLISHED
+  REJECTED
+  ARCHIVED
+}
+
+enum VersionedEntityType {
+  SYSTEM
+  MODULE
+  FEATURE
+  FUNCTIONAL_ITEM
+  DOCUMENT_TEMPLATE
+  ADHERENCE_ANALYSIS
+}
+
+enum SnapshotType {
+  BEFORE
+  AFTER
+  APPROVED
+  PUBLISHED
+}
+
+enum ChangeType {
+  CREATE
+  UPDATE
+  REORDER
+  REPLACE
+  LOGICAL_DELETE
+  RESTORE
+  IMPORT
+  APPROVAL_DECISION
+}
+
+enum DocumentDiffMarker {
+  NONE
+  INSERTED
+  UPDATED
+  REMOVED
+  REPLACED
+  MOVED
+}
+
+enum ChangeImpactLevel {
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
+}
+
+model Company {
+  id               String            @id @default(cuid())
+  name             String            @unique
+  description      String?
+  isActive         Boolean           @default(true)
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
+  userRoles        CompanyUserRole[]
+  systems          System[]
+  modules          SystemModule[]
+  features         Feature[]
+  functionalItems  FunctionalItem[]
+  versions         Version[]
+  changeSets       ChangeSet[]
+  approvalRequests ApprovalRequest[]
+}
+
 model User {
   id                     String                  @id @default(cuid())
   name                   String
@@ -55,10 +124,14 @@ model User {
   createdAt              DateTime                @default(now())
   updatedAt              DateTime                @updatedAt
   roles                  UserRole[]
+  companyRoles           CompanyUserRole[]
   approvalScopes         ApprovalScope[]
   createdFunctionalItems FunctionalItem[]        @relation("FunctionalItemCreatedBy")
   updatedFunctionalItems FunctionalItem[]        @relation("FunctionalItemUpdatedBy")
-  versions               FunctionalItemVersion[]
+  deletedFunctionalItems FunctionalItem[]        @relation("FunctionalItemDeletedBy")
+  createdVersions        Version[]               @relation("VersionCreatedBy")
+  approvedVersions       Version[]               @relation("VersionApprovedBy")
+  createdChangeSets      ChangeSet[]             @relation("ChangeSetCreatedBy")
   approvalRequests       ApprovalRequest[]       @relation("ApprovalRequestedBy")
   approvalDecisions      ApprovalDecision[]
   auditLogs              AuditLog[]
@@ -66,14 +139,15 @@ model User {
 }
 
 model Role {
-  id          String           @id @default(cuid())
-  code        String           @unique
-  name        String
-  description String?
-  createdAt   DateTime         @default(now())
-  updatedAt   DateTime         @updatedAt
-  users       UserRole[]
-  permissions RolePermission[]
+  id           String            @id @default(cuid())
+  code         String            @unique
+  name         String
+  description  String?
+  createdAt    DateTime          @default(now())
+  updatedAt    DateTime          @updatedAt
+  users        UserRole[]
+  companyUsers CompanyUserRole[]
+  permissions  RolePermission[]
 }
 
 model Permission {
@@ -91,6 +165,22 @@ model UserRole {
   role   Role   @relation(fields: [roleId], references: [id], onDelete: Cascade)
 
   @@id([userId, roleId])
+}
+
+model CompanyUserRole {
+  id        String   @id @default(cuid())
+  userId    String
+  companyId String
+  roleId    String
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  company   Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  role      Role     @relation(fields: [roleId], references: [id], onDelete: Restrict)
+
+  @@unique([userId, companyId])
+  @@index([companyId, roleId])
 }
 
 model RolePermission {
@@ -137,14 +227,14 @@ model ItemStatus {
 }
 
 model OpinionType {
-  id               String                  @id @default(cuid())
-  code             String                  @unique
+  id               String            @id @default(cuid())
+  code             String            @unique
   name             String
   description      String?
-  requiresApproval Boolean                 @default(false)
-  isActive         Boolean                 @default(true)
-  sortOrder        Int                     @default(0)
-  versions         FunctionalItemVersion[]
+  requiresApproval Boolean           @default(false)
+  isActive         Boolean           @default(true)
+  sortOrder        Int               @default(0)
+  functionalItems  FunctionalItem[]
   approvals        ApprovalRequest[]
 }
 
@@ -161,19 +251,25 @@ model BrazilianState {
 
 model System {
   id              String           @id @default(cuid())
+  companyId       String
   name            String
-  slug            String           @unique
+  slug            String
   description     String?
   isActive        Boolean          @default(true)
   createdAt       DateTime         @default(now())
   updatedAt       DateTime         @updatedAt
+  company         Company          @relation(fields: [companyId], references: [id], onDelete: Restrict)
   modules         SystemModule[]
   functionalItems FunctionalItem[]
   approvalScopes  ApprovalScope[]
+
+  @@unique([companyId, slug])
+  @@index([companyId])
 }
 
 model SystemModule {
   id              String           @id @default(cuid())
+  companyId       String
   systemId        String
   name            String
   slug            String
@@ -181,16 +277,19 @@ model SystemModule {
   isActive        Boolean          @default(true)
   createdAt       DateTime         @default(now())
   updatedAt       DateTime         @updatedAt
+  company         Company          @relation(fields: [companyId], references: [id], onDelete: Restrict)
   system          System           @relation(fields: [systemId], references: [id], onDelete: Restrict)
   features        Feature[]
   functionalItems FunctionalItem[]
   approvalScopes  ApprovalScope[]
 
   @@unique([systemId, slug])
+  @@index([companyId])
 }
 
 model Feature {
   id              String           @id @default(cuid())
+  companyId       String
   moduleId        String
   name            String
   slug            String
@@ -198,41 +297,56 @@ model Feature {
   isActive        Boolean          @default(true)
   createdAt       DateTime         @default(now())
   updatedAt       DateTime         @updatedAt
+  company         Company          @relation(fields: [companyId], references: [id], onDelete: Restrict)
   module          SystemModule     @relation(fields: [moduleId], references: [id], onDelete: Restrict)
   functionalItems FunctionalItem[]
   approvalScopes  ApprovalScope[]
 
   @@unique([moduleId, slug])
+  @@index([companyId])
 }
 
 model FunctionalItem {
   id               String                  @id @default(cuid())
+  companyId        String
   systemId         String
   moduleId         String
   featureId        String
+  hierarchyCode    String
+  position         Int
   natureId         String
   statusId         String
+  opinionTypeId    String?
   title            String
   description      String
   pocRequired      Boolean                 @default(false)
-  scopeType        FunctionalItemScopeType  @default(GENERAL)
+  scopeType        FunctionalItemScopeType @default(GENERAL)
   currentVersion   String
-  opinion          String?
-  observations     String?
+  observation      String?                 @map("observations")
+  isDeleted        Boolean                 @default(false)
+  deletedAt        DateTime?
+  deletedById      String?
+  deletedReason    String?
   createdById      String
   updatedById      String?
   createdAt        DateTime                @default(now())
   updatedAt        DateTime                @updatedAt
+  company          Company                 @relation(fields: [companyId], references: [id], onDelete: Restrict)
   system           System                  @relation(fields: [systemId], references: [id], onDelete: Restrict)
   module           SystemModule            @relation(fields: [moduleId], references: [id], onDelete: Restrict)
   feature          Feature                 @relation(fields: [featureId], references: [id], onDelete: Restrict)
   nature           Nature                  @relation(fields: [natureId], references: [id], onDelete: Restrict)
   status           ItemStatus              @relation(fields: [statusId], references: [id], onDelete: Restrict)
+  opinionType      OpinionType?            @relation(fields: [opinionTypeId], references: [id], onDelete: SetNull)
   createdBy        User                    @relation("FunctionalItemCreatedBy", fields: [createdById], references: [id], onDelete: Restrict)
   updatedBy        User?                   @relation("FunctionalItemUpdatedBy", fields: [updatedById], references: [id], onDelete: Restrict)
+  deletedBy        User?                   @relation("FunctionalItemDeletedBy", fields: [deletedById], references: [id], onDelete: Restrict)
   states           FunctionalItemState[]
-  versions         FunctionalItemVersion[]
   approvalRequests ApprovalRequest[]
+
+  @@index([companyId, systemId, moduleId, featureId])
+  @@index([featureId, position])
+  @@index([featureId, hierarchyCode])
 }
 
 model FunctionalItemState {
@@ -246,44 +360,117 @@ model FunctionalItemState {
   @@unique([functionalItemId, stateId])
 }
 
-model FunctionalItemVersion {
-  id               String                 @id @default(cuid())
-  functionalItemId String
-  version          String
-  year             Int
-  sequence         Int
-  previousValues   Json?
-  newValues        Json
-  scopeSnapshot    Json?
-  changeSummary    String?
-  justification    String?
-  opinionTypeId    String?
-  approvalStatus   ApprovalStatus         @default(PENDING)
+model Version {
+  id               String              @id @default(cuid())
+  companyId        String
+  entityType       VersionedEntityType
+  entityId         String
+  versionCode      String
+  status           VersionStatus       @default(DRAFT)
+  baseVersionId    String?
   createdById      String
-  createdAt        DateTime               @default(now())
-  functionalItem   FunctionalItem         @relation(fields: [functionalItemId], references: [id], onDelete: Cascade)
-  opinionType      OpinionType?           @relation(fields: [opinionTypeId], references: [id], onDelete: SetNull)
-  createdBy        User                   @relation(fields: [createdById], references: [id], onDelete: Restrict)
+  approvedById     String?
+  publishedAt      DateTime?
+  approvedAt       DateTime?
+  createdAt        DateTime            @default(now())
+  updatedAt        DateTime            @updatedAt
+  company          Company             @relation(fields: [companyId], references: [id], onDelete: Restrict)
+  baseVersion      Version?            @relation("VersionBase", fields: [baseVersionId], references: [id], onDelete: SetNull)
+  derivedVersions  Version[]           @relation("VersionBase")
+  createdBy        User                @relation("VersionCreatedBy", fields: [createdById], references: [id], onDelete: Restrict)
+  approvedBy       User?               @relation("VersionApprovedBy", fields: [approvedById], references: [id], onDelete: Restrict)
+  snapshots        Snapshot[]
+  baseChangeSets   ChangeSet[]         @relation("ChangeSetBaseVersion")
+  targetChangeSets ChangeSet[]         @relation("ChangeSetTargetVersion")
   approvalRequests ApprovalRequest[]
 
-  @@unique([functionalItemId, version])
+  @@unique([entityType, entityId, versionCode])
+  @@index([companyId, entityType, entityId])
+  @@index([status])
+}
+
+model Snapshot {
+  id                    String              @id @default(cuid())
+  versionId             String
+  entityType            VersionedEntityType
+  entityId              String
+  snapshotType          SnapshotType
+  data                  Json
+  treeContext           Json?
+  hierarchyContext      Json?
+  documentRenderContext Json?
+  createdAt             DateTime            @default(now())
+  version               Version             @relation(fields: [versionId], references: [id], onDelete: Cascade)
+
+  @@index([versionId, snapshotType])
+  @@index([entityType, entityId])
+}
+
+model ChangeSet {
+  id                String              @id @default(cuid())
+  companyId         String
+  entityType        VersionedEntityType
+  entityId          String
+  changeType        ChangeType
+  baseVersionId     String?
+  targetVersionId   String?
+  approvalRequestId String?
+  reason            String?
+  createdById       String
+  createdAt         DateTime            @default(now())
+  company           Company             @relation(fields: [companyId], references: [id], onDelete: Restrict)
+  baseVersion       Version?            @relation("ChangeSetBaseVersion", fields: [baseVersionId], references: [id], onDelete: SetNull)
+  targetVersion     Version?            @relation("ChangeSetTargetVersion", fields: [targetVersionId], references: [id], onDelete: SetNull)
+  approvalRequest   ApprovalRequest?    @relation(fields: [approvalRequestId], references: [id], onDelete: SetNull)
+  createdBy         User                @relation("ChangeSetCreatedBy", fields: [createdById], references: [id], onDelete: Restrict)
+  items             ChangeSetItem[]
+
+  @@index([companyId, entityType, entityId])
+  @@index([changeType])
+}
+
+model ChangeSetItem {
+  id               String              @id @default(cuid())
+  changeSetId      String
+  entityType       VersionedEntityType
+  entityId         String
+  fieldPath        String
+  previousValue    Json?
+  nextValue        Json?
+  oldPosition      Int?
+  newPosition      Int?
+  oldHierarchyCode String?
+  newHierarchyCode String?
+  documentMarker   DocumentDiffMarker  @default(NONE)
+  renderHint       String?
+  impactLevel      ChangeImpactLevel   @default(LOW)
+  createdAt        DateTime            @default(now())
+  changeSet        ChangeSet           @relation(fields: [changeSetId], references: [id], onDelete: Cascade)
+
+  @@index([changeSetId])
+  @@index([entityType, entityId])
 }
 
 model ApprovalRequest {
-  id               String                 @id @default(cuid())
+  id               String             @id @default(cuid())
+  companyId        String
   functionalItemId String
   versionId        String?
   opinionTypeId    String?
-  status           ApprovalStatus         @default(PENDING)
+  status           ApprovalStatus     @default(PENDING)
   requestedById    String
-  requestedAt      DateTime               @default(now())
+  requestedAt      DateTime           @default(now())
   resolvedAt       DateTime?
   notes            String?
-  functionalItem   FunctionalItem         @relation(fields: [functionalItemId], references: [id], onDelete: Cascade)
-  version          FunctionalItemVersion? @relation(fields: [versionId], references: [id], onDelete: SetNull)
-  opinionType      OpinionType?           @relation(fields: [opinionTypeId], references: [id], onDelete: SetNull)
-  requestedBy      User                   @relation("ApprovalRequestedBy", fields: [requestedById], references: [id], onDelete: Restrict)
+  company          Company            @relation(fields: [companyId], references: [id], onDelete: Restrict)
+  functionalItem   FunctionalItem     @relation(fields: [functionalItemId], references: [id], onDelete: Cascade)
+  version          Version?           @relation(fields: [versionId], references: [id], onDelete: SetNull)
+  opinionType      OpinionType?       @relation(fields: [opinionTypeId], references: [id], onDelete: SetNull)
+  requestedBy      User               @relation("ApprovalRequestedBy", fields: [requestedById], references: [id], onDelete: Restrict)
   decisions        ApprovalDecision[]
+  changeSets       ChangeSet[]
+
+  @@index([companyId, status])
 }
 
 model ApprovalDecision {

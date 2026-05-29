@@ -1,15 +1,17 @@
-﻿# Banco de dados
+# Banco de dados
 
 ## Banco recomendado
 
 PostgreSQL.
 
-## Entidades iniciais
+## Entidades v0.2.0
 
+- `Company`
 - `User`
 - `Role`
 - `Permission`
 - `UserRole`
+- `CompanyUserRole`
 - `RolePermission`
 - `ApprovalScope`
 - `AuditLog`
@@ -18,8 +20,11 @@ PostgreSQL.
 - `Feature`
 - `FunctionalItem`
 - `FunctionalItemState`
-- `FunctionalItemVersion`
 - `BrazilianState`
+- `Version`
+- `Snapshot`
+- `ChangeSet`
+- `ChangeSetItem`
 - `ApprovalRequest`
 - `ApprovalDecision`
 - `Nature`
@@ -27,13 +32,56 @@ PostgreSQL.
 - `OpinionType`
 - `DocumentGenerationLog`
 
+## Multiempresa
+
+`Company` e o tenant principal da plataforma.
+
+Estrutura operacional:
+
+```text
+Company -> System -> SystemModule -> Feature -> FunctionalItem
+```
+
+`System`, `SystemModule`, `Feature` e `FunctionalItem` possuem `companyId` direto. Em `FunctionalItem`, os campos `companyId`, `systemId`, `moduleId` e `featureId` sao contexto denormalizado para filtros, auditoria, seguranca e documentos.
+
+A fonte oficial da hierarquia e:
+
+```text
+Feature -> SystemModule -> System -> Company
+```
+
+Services de dominio devem resolver os campos denormalizados a partir de `featureId`, nunca confiar em valores livres informados pela interface.
+
+## Papeis por empresa
+
+`CompanyUserRole` representa:
+
+```text
+User + Company + Role
+```
+
+Regra v0.2.0:
+
+- um usuario possui apenas um papel ativo por empresa;
+- a constraint `userId + companyId` evita dois papeis simultaneos na mesma empresa;
+- o papel global legado em `UserRole` permanece apenas para compatibilidade da foundation inicial.
+
 ## Hierarquia funcional
 
 ```text
-System -> SystemModule -> Feature -> FunctionalItem -> FunctionalItemVersion
+System -> SystemModule -> Feature -> FunctionalItem
 ```
 
-A `FunctionalItem` representa o estado atual da particularidade/funcao. A `FunctionalItemVersion` preserva historico, valores anteriores, novos valores, parecer, agente, data/hora e status de aprovacao.
+`FunctionalItem` representa a particularidade/funcao atual, com:
+
+- `hierarchyCode`;
+- `position`;
+- `isDeleted`;
+- `deletedAt`;
+- `deletedById`;
+- `deletedReason`.
+
+`hierarchyCode` e `position` devem ser controlados pelo `HierarchyRenumberingService`.
 
 ## Abrangencia estadual
 
@@ -51,25 +99,29 @@ Estados brasileiros ficam parametrizados em `BrazilianState`, com:
 
 O relacionamento entre particularidades e estados e feito por `FunctionalItemState`.
 
-Regras estruturais:
+## Versionamento canonico
 
-- uma particularidade pode estar vinculada a multiplos estados;
-- `FunctionalItemState` evita duplicidade por `functionalItemId` + `stateId`;
-- `GENERAL` nao exige estados vinculados;
-- `STATE_SPECIFIC` deve ter ao menos um estado vinculado, regra que sera validada na camada de servico quando os fluxos funcionais forem implementados.
+`FunctionalItemVersion` foi removida na v0.2.0.
 
-`FunctionalItemVersion.scopeSnapshot` deve preservar a abrangencia estadual no momento da versao, por exemplo:
+O versionamento oficial passa a ser:
 
-```json
-{
-  "scopeType": "STATE_SPECIFIC",
-  "states": [
-    { "code": "MG", "name": "Minas Gerais", "region": "Sudeste" }
-  ]
-}
+```text
+Version -> Snapshot
+Version -> ChangeSet -> ChangeSetItem
 ```
 
-## Contrato documental futuro
+`Version` registra o marco versionado. `Snapshot` preserva o estado completo. `ChangeSet` representa a operacao governada. `ChangeSetItem` guarda alteracoes campo a campo, incluindo marcadores documentais.
+
+Entidades versionadas usam `VersionedEntityType`, incluindo:
+
+- `SYSTEM`;
+- `MODULE`;
+- `FEATURE`;
+- `FUNCTIONAL_ITEM`;
+- `DOCUMENT_TEMPLATE`;
+- `ADHERENCE_ANALYSIS`.
+
+## Contrato documental futuro por estado
 
 Filtro de documentacao por estado:
 
@@ -88,12 +140,6 @@ Comportamento com `stateCode`:
 - retorna itens `GENERAL`;
 - retorna itens `STATE_SPECIFIC` vinculados ao estado informado;
 - exclui itens `STATE_SPECIFIC` vinculados apenas a outros estados.
-
-## Versionamento
-
-Padrao inicial: `AAAA.N`, por exemplo `2026.1`.
-
-O campo `version` guarda a representacao textual. Os campos `year` e `sequence` facilitam ordenacao e geracao da proxima versao.
 
 ## Auditoria
 

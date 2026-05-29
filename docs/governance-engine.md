@@ -117,7 +117,7 @@ Eventos futuros recomendados:
 Implementar primeiro:
 
 1. `Company`;
-2. `CompanyUserRole`;
+2. `CompanyUserRole` com um papel por empresa;
 3. matriz de permissoes;
 4. `GovernanceContextResolver`;
 5. `AuditRecorder`;
@@ -126,3 +126,12 @@ Implementar primeiro:
 8. `ReplacementService`.
 
 Workflow e documentos devem consumir essa base, nao recria-la.
+
+## Decisoes fisicas v0.2.0
+
+- `FunctionalItemVersion` foi substituida pelo modelo generico `Version`, `Snapshot`, `ChangeSet` e `ChangeSetItem`.
+- `ApprovalRequest.versionId` passa a apontar para `Version`.
+- `System`, `SystemModule`, `Feature` e `FunctionalItem` carregam `companyId`.
+- `FunctionalItem` mantem `companyId`, `systemId`, `moduleId` e `featureId` como contexto denormalizado.
+- `Feature` permanece a fonte oficial de verdade da hierarquia da particularidade.
+- `CompanyUserRole` usa unicidade `userId + companyId` para evitar papeis simultaneos na mesma empresa.

@@ -5,6 +5,8 @@ const prisma = new PrismaClient();
 
 const permissions = [
   ["platform.admin", "Administrar parametros globais da plataforma"],
+  ["companies.admin", "Administrar empresas e escopos empresariais"],
+  ["governance.version", "Administrar versoes, snapshots e changesets"],
   ["users.admin", "Administrar usuarios, agentes e aprovadores"],
   ["settings.admin", "Administrar configuracoes"],
   ["specifications.read", "Consultar especificacoes funcionais"],
@@ -90,6 +92,12 @@ const opinionTypes = [
   ["remove", "Retirar", "Retirar especificacao existente.", true],
   ["replace", "Substituir", "Substituir especificacao existente.", true],
   ["other", "Outros", "Parecer parametrizavel para cenarios especificos.", true]
+] as const;
+
+const companies = [
+  ["Sigcorp", "Gestao Tributaria Municipal"],
+  ["Etherium", "Gestao de Infraestrutura"],
+  ["Zouphy", "Gestao de Sistemas Educacionais"]
 ] as const;
 
 const brazilianStates = [
@@ -193,7 +201,7 @@ async function main() {
   const passwordHash = await bcrypt.hash(masterPassword, 12);
   const masterRole = await prisma.role.findUniqueOrThrow({ where: { code: "master_admin" } });
 
-  await prisma.user.upsert({
+  const masterUser = await prisma.user.upsert({
     where: { login: process.env.MASTER_USER_LOGIN ?? "master" },
     update: {
       name: process.env.MASTER_USER_NAME ?? "Administrador Master",
@@ -216,6 +224,32 @@ async function main() {
       }
     }
   });
+
+  for (const [name, description] of companies) {
+    const company = await prisma.company.upsert({
+      where: { name },
+      update: { description, isActive: true },
+      create: { name, description }
+    });
+
+    await prisma.companyUserRole.upsert({
+      where: {
+        userId_companyId: {
+          userId: masterUser.id,
+          companyId: company.id
+        }
+      },
+      update: {
+        roleId: masterRole.id,
+        isActive: true
+      },
+      create: {
+        userId: masterUser.id,
+        companyId: company.id,
+        roleId: masterRole.id
+      }
+    });
+  }
 }
 
 main()

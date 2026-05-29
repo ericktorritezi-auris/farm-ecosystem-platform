@@ -2,6 +2,32 @@
 
 Todas as alteracoes relevantes deste projeto devem ser registradas neste arquivo.
 
+## v0.2.0 - Core Governance Engine foundation
+
+### Adicionado
+
+- Entidade `Company` como tenant principal.
+- Entidade `CompanyUserRole` com um papel por usuario em cada empresa.
+- Enums `VersionStatus`, `VersionedEntityType`, `SnapshotType`, `ChangeType`, `DocumentDiffMarker` e `ChangeImpactLevel`.
+- Entidades `Version`, `Snapshot`, `ChangeSet` e `ChangeSetItem` como versionamento canonico da plataforma.
+- Campos canonicos de governanca em `FunctionalItem`, incluindo `companyId`, `hierarchyCode`, `position`, exclusao logica e parecer parametrizado.
+- `companyId` em `System`, `SystemModule` e `Feature`.
+- Services base para governanca, auditoria, versionamento, snapshots, changesets e renumeracao hierarquica.
+- Seed das empresas iniciais `Sigcorp`, `Etherium` e `Zouphy`.
+
+### Removido
+
+- Entidade `FunctionalItemVersion`, substituida pelo modelo generico `Version`, `Snapshot`, `ChangeSet` e `ChangeSetItem`.
+
+### Atualizado
+
+- `ApprovalRequest.versionId` passa a apontar para `Version`.
+- Documentacao de banco, dominio, permissoes, governanca e versionamento alinhada ao modelo v0.2.0.
+
+### Observacoes
+
+- Esta entrega nao implementa telas, CRUD, APIs completas, autenticacao funcional, DOCX/PDF, IA ou importacao massiva.
+
 ## v0.1.4 - Governance hardening de versionamento, hierarquia e comparativo
 
 ### Adicionado

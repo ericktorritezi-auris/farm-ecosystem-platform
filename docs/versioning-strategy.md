@@ -14,6 +14,8 @@ ChangeSetItem
 ApprovalHistory
 ```
 
+`FunctionalItemVersion` foi removida da arquitetura fisica na v0.2.0. Particularidades/funcoes usam o mesmo modelo generico de versionamento das demais entidades governadas.
+
 ## Version
 
 Representa um marco versionado.
@@ -134,6 +136,8 @@ Guarda o historico decisorio:
 - etapa;
 - status anterior;
 - status novo.
+
+Na v0.2.0, `ApprovalRequest.versionId` referencia `Version`, nao uma entidade especifica de particularidade.
 
 ## Criacao
 
